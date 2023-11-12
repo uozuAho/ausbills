@@ -38,5 +38,17 @@ def load_bills():
         time.sleep(.5)
 
 
+def generate_summary_embeddings():
+    con, cur = db.connect()
+    model = llm.get_embedding_model('ada-002')
+    bills = cur.execute('SELECT title, summary FROM bill').fetchall()
+    for bill in bills[:1]:
+        title, summary = bill
+        emb = model.embed(summary)
+        print(title)
+        print('embedding:')
+        print(hex(emb))
+
+
 if __name__ == '__main__':
     main()
