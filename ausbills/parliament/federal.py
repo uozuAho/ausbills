@@ -42,12 +42,8 @@ class AllBills(object):
         self._build_dataset()
 
     def _build_dataset(self):
-        try:
-            for i in range(2):
-                self._scrape_data(i)
-        except Exception as e:
-            print("Link broken:")
-            print(e)
+        for i in range(2):
+            self._scrape_data(i)
 
     def _scrape_data(self, table_no):
         markup = requests.get(bills_legislation_url).text
