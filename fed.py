@@ -1,18 +1,52 @@
 import time
+import traceback
 
 from ausbills.parliament.federal import get_bills_metadata, get_bill
 import llm
 
+import staging
 import store
 
 
 def main():
+    # staging.wipe()
+    load_staging()
+
     # store.wipe()
     # load_metadata()
     # load_bills()
     # generate_summary_embeddings()
-    for b in get_similar_bills('climate change'):
-        print(b)
+    # for b in get_similar_bills('climate change'):
+    #     print(b)
+
+
+def load_staging(reload_errors=True):
+    """ Load all bills from the web into the staging db
+
+        Parameters:
+            reload_errors (bool): reload bills that had errors
+    """
+    md = get_bills_metadata()
+    for i, meta in enumerate(md):
+        staged_bill = staging.load_bill(meta.title)
+        if staged_bill:
+            if reload_errors and staged_bill.error:
+                print(f'reloading {i} of {len(md)}: {meta.title}')
+                staging.delete_bill(meta.title)
+            else:
+                print(f'skipping {i} of {len(md)}: {meta.title}')
+                continue
+        try:
+            bill = get_bill(meta)
+            staging.save_bill(staging.Bill.from_fed_bill(bill))
+            print(f'loaded {i} of {len(md)}')
+        except Exception as e:
+            bill = staging.Bill.from_meta(meta)
+            bill.error = str(e) + '\n' + traceback.format_exc()
+            staging.save_bill(bill)
+            print(f'failed to load {i} of {len(md)}: {e}')
+            raise
+        time.sleep(.5)
 
 
 def load_metadata():

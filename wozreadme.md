@@ -14,9 +14,13 @@ python -i db.py
 ```
 
 # todo
-- generate embeddings of summaries in bill table
-- ask some questions
-- ~60% of bills don't load. parsing html is probably broken
+- loading meta: 11 bad records. why?
+- loading bills: ~60% of bills don't load. parsing html is probably broken
+- load bill memorandums, embed, any better?
+    - ask more specific questions
+    - try RAG?
+- load all bills? possibly just getting last few years
+- try clustering?
 
 # notes
 - stuff is broken in this library. see my changes. maybe PR?

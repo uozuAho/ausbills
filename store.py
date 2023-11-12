@@ -4,17 +4,14 @@ from dataclasses import dataclass
 
 from typing import List
 
-
-@dataclass
-class Bill:
-    title: str
-    link: str
-    summary: str
-    embedding: List[float]
-
+DB_FILE = 'fedbills.db'
 
 def wipe():
-    db.drop_and_build()
+    db.drop(DB_FILE)
+    con, cur = db.connect(DB_FILE)
+    cur.execute('CREATE TABLE IF NOT EXISTS bill_meta(title text, link text, parliament text)')
+    cur.execute('CREATE TABLE IF NOT EXISTS bill(title text, link text, summary text, embedding blob)')
+    con.commit()
 
 
 def save_bill_meta(meta):
