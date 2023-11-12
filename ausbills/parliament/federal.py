@@ -35,6 +35,7 @@ chambers = ["House", "Senate"]
 class AllBills(object):
     this_year = datetime.datetime.now().year
     _bills_data = []
+    bad_data = []
     chambers = ["House", "Senate"]
 
     def __init__(self):
@@ -84,8 +85,9 @@ class AllBills(object):
                 row_dict = self._convert_to_datetime(row_dict)
                 self._bills_data.append(row_dict)
             except Exception as e:
-                print("Bad data", e, " - ", row_dict[SHORT_TITLE])
-                raise e
+                # print("Bad data", e, " - ", row_dict[SHORT_TITLE])
+                row_dict['exception'] = str(e)
+                self.bad_data.append(row_dict)
 
     def _get_row_data(self, tds):
         row_data = []
@@ -215,7 +217,10 @@ def get_bills_metadata() -> List[BillMetaFed]:
     Returns:
         List[BillMetaFed]: BillMetaFed is to be used with get_bill(BillMetaFed) to get detailed data
     """
-    _all_bills = AllBills().data
+    all_bills = AllBills()
+    _all_bills = all_bills.data
+    print(f'loaded {len(_all_bills)} bills')
+    print(f'{len(all_bills.bad_data)} bills were bad')
     _bill_meta_list = []
     for bill_dict in _all_bills:
         house = "LOWER" if bill_dict[CHAMBER] == "house" else "UPPER"
