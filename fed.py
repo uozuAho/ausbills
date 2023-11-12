@@ -3,51 +3,61 @@ import time
 from ausbills.parliament.federal import get_bills_metadata, get_bill
 import llm
 
-import db
+import store
 
 
 def main():
-    # db.drop_and_build()
+    # store.wipe()
     # load_metadata()
     # load_bills()
-    generate_summary_embeddings()
+    # generate_summary_embeddings()
+    for b in get_similar_bills('climate change'):
+        print(b)
 
 
 def load_metadata():
-    con, cur = db.connect()
     print('loading metadata...')
     md = get_bills_metadata()
     print('saving to db...')
     for meta in md:
-        cur.execute('INSERT INTO bill_meta(title, link, parliament) VALUES(?, ?, ?)', (meta.title, meta.link, meta.parliament))
-    con.commit()
+        store.save_bill_meta(meta)
 
 
 def load_bills():
-    """ Currently loads bill summaries into the bill table """
-    con, cur = db.connect()
     md = get_bills_metadata()
-    for i, meta in enumerate(md[137:]):
+    for i, meta in enumerate(md):
         try:
             b = get_bill(meta)
-            cur.execute('INSERT INTO bill(title, link, summary) VALUES(?, ?, ?)', (b.title, b.link, b.summary))
-            con.commit()
-            print(f'loaded {i + 137} of {len(md)}')
+            store.save_bill(b)
+            print(f'loaded {i} of {len(md)}')
         except Exception as e:
-            print(f'failed to load {i + 137} of {len(md)}: {e}')
+            print(f'failed to load {i} of {len(md)}: {e}')
         time.sleep(.5)
 
 
 def generate_summary_embeddings():
-    con, cur = db.connect()
     model = llm.get_embedding_model('ada-002')
-    bills = cur.execute('SELECT title, summary FROM bill').fetchall()
-    for bill in bills[:1]:
-        title, summary = bill
+    bills = store.load_bills()
+    for i, bill in enumerate(bills):
+        title, summary, embedding = bill
+        if embedding: continue    # don't regenerate
+        if not summary: continue
         emb = model.embed(summary)
-        print(title)
-        print('embedding:')
-        print(hex(emb))
+        store.save_bill_embedding(title, emb)
+        print(f'generated embedding {i} of {len(bills)}')
+
+
+def get_similar_bills(prompt):
+    model = llm.get_embedding_model('ada-002')
+    prompt_emb = model.embed(prompt)
+    bills = store.load_bills()
+    results = []
+    for title, summary, embedding in bills:
+        if not embedding: continue
+        emb2 = store.emb_decode(embedding)
+        results.append((title, summary, llm.cosine_similarity(prompt_emb, emb2)))
+    results.sort(key=lambda x: x[2], reverse=True)
+    return results[:5]
 
 
 if __name__ == '__main__':

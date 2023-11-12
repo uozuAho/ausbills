@@ -12,7 +12,7 @@ def drop_and_build():
     os.remove(DATABASE)
     con, cur = connect()
     cur.execute('CREATE TABLE IF NOT EXISTS bill_meta(title text, link text, parliament text)')
-    cur.execute('CREATE TABLE IF NOT EXISTS bill(title text, link text, summary text)')
+    cur.execute('CREATE TABLE IF NOT EXISTS bill(title text, link text, summary text, embedding blob)')
     con.commit()
 
 def print_schema():
