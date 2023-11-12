@@ -1,32 +1,20 @@
-import sqlite3
-import os
 import time
 
 from ausbills.parliament.federal import get_bills_metadata, get_bill
+import llm
+
+import db
 
 
 def main():
-    # drop_db()
-    # create_schema()
+    # db.drop_and_build()
     # load_metadata()
-    load_bills()
-
-
-def drop_db():
-    os.remove("fedbills.db")
-
-
-def create_schema():
-    con = sqlite3.connect("fedbills.db")
-    cur = con.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS bill_meta(title text, link text, parliament text)')
-    cur.execute('CREATE TABLE IF NOT EXISTS bill(title text, link text, summary text)')
-    con.commit()
+    # load_bills()
+    generate_summary_embeddings()
 
 
 def load_metadata():
-    con = sqlite3.connect("fedbills.db")
-    cur = con.cursor()
+    con, cur = db.connect()
     print('loading metadata...')
     md = get_bills_metadata()
     print('saving to db...')
@@ -37,8 +25,7 @@ def load_metadata():
 
 def load_bills():
     """ Currently loads bill summaries into the bill table """
-    con = sqlite3.connect("fedbills.db")
-    cur = con.cursor()
+    con, cur = db.connect()
     md = get_bills_metadata()
     for i, meta in enumerate(md[137:]):
         try:

@@ -9,8 +9,8 @@ pip install -r requirements
 llm keys set openai <enter your openai api key>
 # modify then run:
 python fed.py
-# database utils
-python db.py
+# interactive database utils
+python -i db.py
 ```
 
 # todo
