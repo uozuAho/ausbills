@@ -65,8 +65,8 @@ def delete_bill(id: str):
     con.commit()
 
 
-def load_from_staging():
-    old_bills = staging.load_bills()
-    for old_bill in old_bills:
-        bill = Bill.from_old(old_bill)
-        save_bill(bill)
+def load_bills():
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT id, title, link, summary, error, all_data FROM bill')
+    rows = cur.fetchall()
+    return [Bill(*row) for row in rows]
