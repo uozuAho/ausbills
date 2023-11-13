@@ -58,3 +58,10 @@ def delete_bill(title: str):
     con, cur = db.connect(DB_FILE)
     cur.execute('DELETE FROM bill WHERE title=?', (title,))
     con.commit()
+
+
+def load_bills():
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT title, link, summary, error, all_data FROM bill')
+    rows = cur.fetchall()
+    return [Bill(None, *row) for row in rows]

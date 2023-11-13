@@ -5,12 +5,15 @@ from ausbills.parliament.federal import get_bills_metadata, get_bill
 import llm
 
 import staging
+import staging2
 import store
 
 
 def main():
     # staging.wipe()
-    load_staging()
+    # load_staging()
+    staging2.wipe()
+    staging2.load_from_staging()
 
     # store.wipe()
     # load_metadata()

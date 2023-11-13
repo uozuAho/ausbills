@@ -16,7 +16,8 @@ python -i db.py
 # todo
 - staging
     - dedupe by id instead of title
-        - rebuild using json
+        - DONE: rebuild using json
+        - delete old staging
         - reload staging, as many bills may have been skipped
     - note: several titles don't parse correctly from the bills list. don't really care, bill link is important
     - note: 1 bill doesn't have a summary on the website
