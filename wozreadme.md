@@ -14,19 +14,25 @@ python -i db.py
 ```
 
 # todo
-- staging
-    - dedupe by id instead of title
-        - DONE: rebuild using json
-        - DONE: reload staging, as many bills may have been skipped
-    - note: several titles don't parse correctly from the bills list. don't really care, bill link is important
-    - note: 1 bill doesn't have a summary on the website
-    - note: ignore records with bad links, there's only 1
-- loading meta: 11 bad records. why?
+- how to tell if a bill passed/will not pass?
+- what is a sponsor? which party?
+- cluster
+    - by sponsor?
+    - by area? kmeans? how many areas are there?
+- load bills from previous parliaments
+- show number of bills passed over time
+- do libs/labor cause different bills to be passed/rejected?
 - load bill memorandums, embed, any better?
     - ask more specific questions
     - try RAG?
-- load bills from previous parliaments
+- data quality
+    - loading 11 bad records in current parliament bills list. why?
 - try clustering?
 
 # notes
 - stuff is broken in this library. see my changes. maybe PR?
+- several bill titles don't parse correctly from the bills list. don't really
+  care, bill link is important
+- 1 bill doesn't have a summary on the website
+- ignore bills with bad links, there's only 2, these possibly don't have links
+  on the bill list page

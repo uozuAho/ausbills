@@ -153,3 +153,4 @@ cython_debug/
 .secrets
 fedbills.db
 staging*.db
+*.db.bak

@@ -13,8 +13,7 @@ def main():
     # staging2.load_from_staging()
     # load_staging2()
 
-    # store.wipe()
-    # load_metadata()
+    store.wipe()
     load_bills()
     # generate_summary_embeddings()
     # for b in get_similar_bills('climate change'):
@@ -50,19 +49,12 @@ def load_staging2(reload_errors=False):
         time.sleep(.5)
 
 
-def load_metadata():
-    print('loading metadata...')
-    md = get_bills_metadata()
-    print('saving to db...')
-    for meta in md:
-        store.save_bill_meta(meta)
-
-
 def load_bills():
     """ Load bills from staging into main db """
     bills = staging2.load_bills()
     for bill in bills:
-        store.save_bill(bill)
+        sbill = store.Bill.from_staging(bill)
+        store.save_bill(sbill)
 
 
 def generate_summary_embeddings():

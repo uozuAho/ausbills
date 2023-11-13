@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import json
 from ausbills.parliament.federal import BillFed, BillMetaFed
 import db
-import staging
 
 DB_FILE = 'staging2.db'
 
@@ -24,12 +23,6 @@ class Bill:
     @staticmethod
     def from_fed_bill(bill: BillFed):
         return Bill(bill.id, bill.title, bill.link, bill.summary, error=None, all_data=bill.asJson())
-
-    @staticmethod
-    def from_old(bill: staging.Bill):
-        j = json.loads(bill.all_data)
-        bill.id = j['id']
-        return Bill(**bill.__dict__)
 
 
 def wipe():
