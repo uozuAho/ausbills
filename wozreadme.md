@@ -14,8 +14,16 @@ python -i db.py
 ```
 
 # todo
+- staging
+    - dedupe by id instead of title
+        - rebuild using json
+        - reload staging, as many bills may have been skipped
+    - note: several titles don't parse correctly from the bills list. don't really care, bill link is important
+    - note: 1 bill doesn't have a summary on the website
+    - note: ignore records with bad links, there's only 1
 - loading meta: 11 bad records. why?
 - loading bills: ~60% of bills don't load. parsing html is probably broken
+    - fixed now???
 - load bill memorandums, embed, any better?
     - ask more specific questions
     - try RAG?

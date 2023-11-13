@@ -20,7 +20,7 @@ def main():
     #     print(b)
 
 
-def load_staging(reload_errors=True):
+def load_staging(reload_errors=False):
     """ Load all bills from the web into the staging db
 
         Parameters:
