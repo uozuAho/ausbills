@@ -12,8 +12,9 @@ import store
 def main():
     # staging.wipe()
     # load_staging()
-    staging2.wipe()
-    staging2.load_from_staging()
+    # staging2.wipe()
+    # staging2.load_from_staging()
+    load_staging2()
 
     # store.wipe()
     # load_metadata()
@@ -48,6 +49,35 @@ def load_staging(reload_errors=False):
             bill.error = str(e) + '\n' + traceback.format_exc()
             staging.save_bill(bill)
             print(f'failed to load {i} of {len(md)}: {e}')
+            raise
+        time.sleep(.5)
+
+
+def load_staging2(reload_errors=False):
+    """ Load all bills from the web into the staging db
+
+        Parameters:
+            reload_errors (bool): reload bills that had errors
+    """
+    md = get_bills_metadata()
+    for i, meta in enumerate(md):
+        staged_bill = staging2.load_bill(meta.id)
+        if staged_bill:
+            if reload_errors and staged_bill.error:
+                print(f'reloading {i} of {len(md)}: {meta.id}')
+                staging2.delete_bill(meta.id)
+            else:
+                print(f'skipping {i} of {len(md)}: {meta.id}')
+                continue
+        try:
+            bill = get_bill(meta)
+            staging2.save_bill(staging2.Bill.from_fed_bill(bill))
+            print(f'loaded {i} of {len(md)}')
+        except Exception as e:
+            bill = staging2.Bill.from_meta(meta)
+            bill.error = str(e) + '\n' + traceback.format_exc()
+            staging2.save_bill(bill)
+            print(f'failed to load bill id={bill.id}: {e}')
             raise
         time.sleep(.5)
 

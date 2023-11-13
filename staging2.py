@@ -39,11 +39,29 @@ def wipe():
     con.commit()
 
 
+def load_bill(id: str) -> Bill:
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT id, title, link, summary, error, all_data FROM bill WHERE id=?', (id,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        return None
+    if len(rows) > 1:
+        raise Exception(f'expected 1 row for id={id}, got {len(rows)}')
+    row = rows[0]
+    return Bill(*row)
+
+
 def save_bill(bill: Bill):
     con, cur = db.connect(DB_FILE)
     cur.execute('INSERT INTO bill(id, title, link, summary, error, all_data) VALUES(?, ?, ?, ?, ?, ?)',
                 (bill.id, bill.title, bill.link, bill.summary, bill.error, bill.all_data)
                 )
+    con.commit()
+
+
+def delete_bill(id: str):
+    con, cur = db.connect(DB_FILE)
+    cur.execute('DELETE FROM bill WHERE id=?', (id,))
     con.commit()
 
 
