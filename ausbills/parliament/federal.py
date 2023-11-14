@@ -192,6 +192,7 @@ class BillFed(Bill, BillMetaFed):
     summary: str
     sponsor: str
     portfolio: str
+    status: str
     bill_em_links: List[Dict]
 
 
@@ -382,6 +383,15 @@ class BillFedHelper(BillExtractor):
             return ""
 
     @property
+    def status(self):
+        return self.get_status()
+
+    def get_status(self):
+        dt = self.bill_soup.find('dt', string='Status')
+        dd = dt.find_next_sibling('dd')
+        return dd.text.replace('\n', '').replace('\r', '').replace(' ', '')
+
+    @property
     def data(self):
         self._bill_data[CURRENT_READING] = "first"
         text_type = [DOC, PDF, HTML]
@@ -519,5 +529,6 @@ def get_bill(bill_meta: BillMetaFed) -> BillFed:
         bill_em_links=fed_helper.explanatory_memoranda_links,
         progress=progdata[1],
         chamber_progress=progdata[0],
+        status=fed_helper.status
     )
     return bill_fed
