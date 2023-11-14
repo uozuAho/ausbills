@@ -1,4 +1,3 @@
-import json
 import struct
 import db
 from dataclasses import dataclass
@@ -16,41 +15,42 @@ class Bill:
     title: str
     link: str
     summary: str
+    status: str
+    parliament: str
     house: str
     passed_house: bool
     passed_senate: bool
     sponsor: str
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        keys = cls.__annotations__.keys()
+        kvs = {k: d[k] for k in keys}
+        return Bill(**kvs)
+
     @staticmethod
     def from_staging(bill: staging2.Bill):
-        b2 = bill.__dict__
-        js = json.loads(bill.data)
-        def j(key): return js[key] if key in js else None
-        del(b2['all_data'])
-        del(b2['error'])
-        b2['house'] = j('house')
-        b2['passed_house'] = bool(j('passed_house'))
-        b2['passed_senate'] = bool(j('passed_senate'))
-        b2['sponsor'] = j('sponsor')
-        return Bill(**b2)
+        return Bill.from_dict(bill.data)
 
 
 def wipe():
     db.drop(DB_FILE)
     con, cur = db.connect(DB_FILE)
     cur.execute('CREATE TABLE IF NOT EXISTS bill('
-                'id text unique, title text, link text, summary text, house text, '
-                'passed_house boolean, passed_senate boolean, sponsor text, embedding blob)')
+                '_id integer primary key autoincrement, id text unique, title text, '
+                'link text, summary text, status text, parliament text, house text, '
+                'passed_house boolean, passed_senate boolean, '
+                'sponsor text, embedding blob)')
     con.commit()
 
 
 def save_bill(bill: Bill):
     con, cur = db.connect(DB_FILE)
-    cur.execute('INSERT INTO bill(id, title, link, summary, house, passed_house, '
-                'passed_senate, sponsor) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
-                (bill.id, bill.title, bill.link, bill.summary, bill.house, bill.passed_house,
-                 bill.passed_senate, bill.sponsor)
-                )
+    bill_dict = bill.__dict__
+    fieldnames = ', '.join(bill_dict.keys())
+    placeholders = ', '.join(['?'] * len(bill_dict))
+    values = tuple(bill_dict.values())
+    cur.execute(f'INSERT INTO bill({fieldnames}) VALUES({placeholders})', values)
     con.commit()
 
 

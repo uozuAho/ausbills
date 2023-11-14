@@ -59,4 +59,6 @@ def load_bills():
     con, cur = db.connect(DB_FILE)
     cur.execute('SELECT id, data, error FROM bill')
     rows = cur.fetchall()
-    return [Bill(*row) for row in rows]
+    for row in rows:
+        data = json.loads(row[1])
+        yield Bill(row[0], data, row[2])

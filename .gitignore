@@ -151,6 +151,5 @@ dmypy.json
 cython_debug/
 
 .secrets
-fedbills.db
-staging*.db
-*.db.bak
+*.db
+*.db.bak*

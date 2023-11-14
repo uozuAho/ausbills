@@ -9,11 +9,11 @@ import store
 
 
 def main():
-    staging2.wipe()
-    load_staging2(limit=5)
+    # staging2.wipe()
+    # load_staging2(limit=5)
 
-    # store.wipe()
-    # load_bills()
+    store.wipe()
+    load_bills()
 
     # generate_summary_embeddings()
     # for b in get_similar_bills('climate change'):
