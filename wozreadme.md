@@ -13,9 +13,24 @@ python fed.py
 python -i db.py
 ```
 
+# why?
+- understand what the federal parliament (legislative) is doing, and has done, at a glance
+- I'd also like to know about executive and state level, but starting small
+
 # todo
 - how to tell if a bill passed/will not pass?
-- what is a sponsor? which party?
+  - **todo** add to ausbills lib. not currently reading status
+  - status:
+    - Act = passed, now law
+    - Not proceeding = will not pass
+    - else: in progress
+  - passed: in bill page: status = Act. will have an assent date & act number
+  - will not pass: status = Not Proceeding. This means the bill in its current
+    form will not be discussed further. It may be significantly reworked and
+    reintroduced, but is not considered the same bill
+    - See https://www.aph.gov.au/About_Parliament/House_of_Representatives/Powers_practice_and_procedure/Practice7/HTML/Chapter10/Bills%E2%80%94the_parliamentary_process
+- what is a sponsor?
+  - who is managing the bill, putting it forward etc. Can be an MP, position, gov department
 - cluster
     - by sponsor?
     - by area? kmeans? how many areas are there?
