@@ -19,7 +19,8 @@ python -i db.py
 
 # todo
 - how to tell if a bill passed/will not pass?
-  - **todo** add to ausbills lib. not currently reading status
+  - DONE: add to ausbills lib. not currently reading status
+  - **todo** reload staging with status
   - status:
     - Act = passed, now law
     - Not proceeding = will not pass
@@ -29,8 +30,6 @@ python -i db.py
     form will not be discussed further. It may be significantly reworked and
     reintroduced, but is not considered the same bill
     - See https://www.aph.gov.au/About_Parliament/House_of_Representatives/Powers_practice_and_procedure/Practice7/HTML/Chapter10/Bills%E2%80%94the_parliamentary_process
-- what is a sponsor?
-  - who is managing the bill, putting it forward etc. Can be an MP, position, gov department
 - cluster
     - by sponsor?
     - by area? kmeans? how many areas are there?

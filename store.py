@@ -24,7 +24,7 @@ class Bill:
     @staticmethod
     def from_staging(bill: staging2.Bill):
         b2 = bill.__dict__
-        js = json.loads(bill.all_data)
+        js = json.loads(bill.data)
         def j(key): return js[key] if key in js else None
         del(b2['all_data'])
         del(b2['error'])

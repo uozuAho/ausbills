@@ -9,37 +9,39 @@ import store
 
 
 def main():
-    # staging2.wipe()
-    # staging2.load_from_staging()
-    # load_staging2()
+    staging2.wipe()
+    load_staging2(limit=5)
 
-    store.wipe()
-    load_bills()
+    # store.wipe()
+    # load_bills()
+
     # generate_summary_embeddings()
     # for b in get_similar_bills('climate change'):
     #     print(b)
 
 
-def load_staging2(reload_errors=False):
+def load_staging2(reload_errors=False, limit=0):
     """ Load all bills from the web into the staging db
 
         Parameters:
             reload_errors (bool): reload bills that had errors
+            limit (int): limit the number of bills to load
     """
     md = get_bills_metadata()
-    for i, meta in enumerate(md):
+    bills_to_load = md[:limit] if limit else md
+    for i, meta in enumerate(bills_to_load):
         staged_bill = staging2.load_bill(meta.id)
         if staged_bill:
             if reload_errors and staged_bill.error:
-                print(f'reloading {i} of {len(md)}: {meta.id}')
+                print(f'reloading {i} of {len(bills_to_load)}: {meta.id}')
                 staging2.delete_bill(meta.id)
             else:
-                print(f'skipping {i} of {len(md)}: {meta.id}')
+                print(f'skipping {i} of {len(bills_to_load)}: {meta.id}')
                 continue
         try:
             bill = get_bill(meta)
             staging2.save_bill(staging2.Bill.from_fed_bill(bill))
-            print(f'loaded {i} of {len(md)}')
+            print(f'loaded {i + 1} of {len(bills_to_load)}')
         except Exception as e:
             bill = staging2.Bill.from_meta(meta)
             bill.error = str(e) + '\n' + traceback.format_exc()
