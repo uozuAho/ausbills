@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from typing import List
 
 import staging2
+import llm_stuff
+
 
 DB_FILE = 'fedbills.db'
 
@@ -52,6 +54,17 @@ def save_bill(bill: Bill):
     con.commit()
 
 
+def load_bill(id: str):
+    con = sqlite3.connect(DB_FILE)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute('SELECT * from bill where id = ?', (id,))
+    rows = cur.fetchall()
+    if not rows: raise Exception(f'no bill with id {id}')
+    if len(rows) > 1: raise Exception(f'multiple bills with id {id}')
+    return Bill.from_dict(dict(rows[0]))
+
+
 def load_bills() -> List[Bill]:
     con = sqlite3.connect(DB_FILE)
     con.row_factory = sqlite3.Row
@@ -67,10 +80,9 @@ def has_embedding(id):
     return cur.fetchone()[0] > 0
 
 
-def set_bill_summary_embedding(id, embedding: List[float]):
+def set_bill_summary_embedding(id, embedding: llm_stuff.Embedding):
     con, cur = db.connect(DB_FILE)
-    emb_bytes = emb_encode(embedding)
-    params = {'bill_id': id, 'embedding': emb_bytes}
+    params = {'bill_id': id, 'embedding': embedding.as_bytes()}
     cur.execute(
         'insert into bill_summary_embedding (bill_id, embedding) '
         'values (:bill_id, :embedding) '
@@ -79,22 +91,18 @@ def set_bill_summary_embedding(id, embedding: List[float]):
     con.commit()
 
 
-# def load_similar_bills()
-#     embedder = Embedder()
-#     prompt_emb = embedder.embed(prompt)
-#     bills = store.load_similar_bills(prompt_emb)
-#     results = []
-#     for bill bills:
-#         if not embedding: continue
-#         emb2 = store.emb_decode(embedding)
-#         results.append((title, summary, embedder.similarity(prompt_emb, emb2)))
-#     results.sort(key=lambda x: x[2], reverse=True)
-#     return results[:5]
-
-
-def emb_encode(values):
-    return struct.pack("<" + "f" * len(values), *values)
-
-
-def emb_decode(binary):
-    return struct.unpack("<" + "f" * (len(binary) // 4), binary)
+def load_similar_bills(prompt):
+    embedder = llm_stuff.Embedder()
+    prompt_emb = embedder.embed(prompt)
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT bill_id, embedding from bill_summary_embedding')
+    bill_scores = []
+    while row := cur.fetchone():
+        bill_id, embedding = row
+        if not embedding: continue
+        embedding = llm_stuff.Embedding.from_bytes(embedding)
+        score = embedder.similarity(prompt_emb, embedding)
+        bill_scores.append((bill_id, score))
+    bill_scores.sort(key=lambda x: x[1], reverse=True)
+    for bill in bill_scores[:5]:
+        yield load_bill(bill[0])
