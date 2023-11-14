@@ -14,18 +14,18 @@ class Bill:
     id: str
     title: str
     link: str
-    summary: str
-    status: str
-    parliament: str
-    house: str
-    passed_house: bool
-    passed_senate: bool
-    sponsor: str
+    summary: str | None = None
+    status: str | None = None
+    parliament: str | None = None
+    house: str | None = None
+    passed_house: bool = False
+    passed_senate: bool = False
+    sponsor: str | None = None
 
     @classmethod
     def from_dict(cls, d: dict):
         keys = cls.__annotations__.keys()
-        kvs = {k: d[k] for k in keys}
+        kvs = {k: d[k] for k in keys if k in d}
         return Bill(**kvs)
 
     @staticmethod

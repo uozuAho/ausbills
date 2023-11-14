@@ -10,7 +10,7 @@ import store
 
 def main():
     # staging2.wipe()
-    # load_staging2(limit=5)
+    # load_staging2()
 
     store.wipe()
     load_bills()
@@ -20,10 +20,11 @@ def main():
     #     print(b)
 
 
-def load_staging2(reload_errors=False, limit=0):
+def load_staging2(raise_on_error=False, reload_errors=False, limit=0):
     """ Load all bills from the web into the staging db
 
         Parameters:
+            raise_on_error (bool): raise an exception if a bill fails to load
             reload_errors (bool): reload bills that had errors
             limit (int): limit the number of bills to load
     """
@@ -47,15 +48,15 @@ def load_staging2(reload_errors=False, limit=0):
             bill.error = str(e) + '\n' + traceback.format_exc()
             staging2.save_bill(bill)
             print(f'failed to load bill id={bill.id}: {e}')
-            raise
+            if raise_on_error: raise
         time.sleep(.5)
 
 
 def load_bills():
     """ Load bills from staging into main db """
-    bills = staging2.load_bills()
-    for bill in bills:
+    for bill in staging2.load_bills():
         sbill = store.Bill.from_staging(bill)
+        if not sbill.link.startswith('http'): continue
         store.save_bill(sbill)
 
 
