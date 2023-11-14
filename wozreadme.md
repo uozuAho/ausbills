@@ -9,8 +9,6 @@ pip install -r requirements
 llm keys set openai <enter your openai api key>
 # modify then run:
 python fed.py
-# interactive database utils
-python -i db.py
 ```
 
 # why?
@@ -18,9 +16,8 @@ python -i db.py
 - I'd also like to know about executive and state level, but starting small
 
 # todo
-- embedding: use title if no summary, or skip if title is garbage
+- WIP: ask for some bills
 - cluster
-    - by sponsor?
     - by area? kmeans? how many areas are there?
 - load bills from previous parliaments
 - show number of bills passed over time
@@ -30,7 +27,10 @@ python -i db.py
     - try RAG?
 - data quality
     - loading 11 bad records in current parliament bills list. why?
-- try clustering?
+
+# maybe
+- fuzzy search by everything: sponsor, party, date, government
+- search by fields + similarity, eg: bills that didn't pass, cluster...?
 
 # notes
 - stuff is broken in this library. see my changes. maybe PR?

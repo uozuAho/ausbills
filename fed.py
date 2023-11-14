@@ -12,13 +12,10 @@ def main():
     # staging2.wipe()
     # load_staging2()
 
-    store.wipe()
-    load_bills()
-
-    # generate_summary_embeddings()
-    # for b in get_similar_bills('climate change'):
-    #     print(b)
-
+    # store.wipe()
+    # load_bills()
+    # generate_summary_embeddings(fake_emb=False, overwrite=False)
+    pass
 
 def load_staging2(raise_on_error=False, reload_errors=False, limit=0):
     """ Load all bills from the web into the staging db
@@ -60,29 +57,63 @@ def load_bills():
         store.save_bill(sbill)
 
 
-def generate_summary_embeddings():
-    model = llm.get_embedding_model('ada-002')
-    bills = store.load_bills()
+def generate_summary_embeddings(fake_emb=True, overwrite=False):
+    """ Generate embeddings for bill summaries
+
+        Parameters:
+            fake_emb (bool): don't use real embeddings (that cost money)
+            overwrite (bool): overwrite existing embeddings
+    """
+    embedder = Embedder()
+    # load all at once to prevent db locking
+    # TODO: do in batches
+    bills = list(store.load_bills())
     for i, bill in enumerate(bills):
-        title, summary, embedding = bill
-        if embedding: continue    # don't regenerate
-        if not summary: continue
-        emb = model.embed(summary)
-        store.save_bill_embedding(title, emb)
-        print(f'generated embedding {i} of {len(bills)}')
+        if store.has_embedding(bill.id) and not overwrite:
+            print(f'skipping {i + 1} of {len(bills)}')
+            continue
+        text_to_embed = bill.summary or bill.title
+        if not text_to_embed: continue
+        emb = [1,2,3]
+        if not fake_emb: emb = embedder.embed(text_to_embed)
+        store.set_bill_summary_embedding(bill.id, emb)
+        print(f'generated embedding {i + 1} of {len(bills)}')
 
 
-def get_similar_bills(prompt):
-    model = llm.get_embedding_model('ada-002')
-    prompt_emb = model.embed(prompt)
-    bills = store.load_bills()
-    results = []
-    for title, summary, embedding in bills:
-        if not embedding: continue
-        emb2 = store.emb_decode(embedding)
-        results.append((title, summary, llm.cosine_similarity(prompt_emb, emb2)))
-    results.sort(key=lambda x: x[2], reverse=True)
-    return results[:5]
+class Embedder:
+    def __init__(self, model_name='ada-002'):
+        self.model = llm.get_embedding_model(model_name)
+
+    def embed(self, text):
+        def embed_single(text):
+            return self.model.embed(text)
+        # retry in case of rate limiting
+        return self._retry(embed_single, text)
+
+    def similarity(self, emb1, emb2):
+        return llm.cosine_similarity(emb1, emb2)
+
+    def _retry(self, func, *args, **kwargs):
+        for i in range(3):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                print(f'failed to {func.__name__}: {e}')
+                time.sleep(2**i)
+        raise Exception('failed to execute function')
+
+
+# def get_similar_bills(prompt):
+#     embedder = Embedder()
+#     prompt_emb = embedder.embed(prompt)
+#     bills = store.load_similar_bills(prompt_emb)
+#     results = []
+#     for bill bills:
+#         if not embedding: continue
+#         emb2 = store.emb_decode(embedding)
+#         results.append((title, summary, embedder.similarity(prompt_emb, emb2)))
+#     results.sort(key=lambda x: x[2], reverse=True)
+#     return results[:5]
 
 
 if __name__ == '__main__':

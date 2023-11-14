@@ -1,3 +1,4 @@
+import sqlite3
 import struct
 import db
 from dataclasses import dataclass
@@ -36,11 +37,8 @@ class Bill:
 def wipe():
     db.drop(DB_FILE)
     con, cur = db.connect(DB_FILE)
-    cur.execute('CREATE TABLE IF NOT EXISTS bill('
-                '_id integer primary key autoincrement, id text unique, title text, '
-                'link text, summary text, status text, parliament text, house text, '
-                'passed_house boolean, passed_senate boolean, '
-                'sponsor text, embedding blob)')
+    with open('store_schema.sql') as f:
+        cur.executescript(f.read())
     con.commit()
 
 
@@ -54,18 +52,44 @@ def save_bill(bill: Bill):
     con.commit()
 
 
-def load_bills():
-    con, cur = db.connect()
-    cur.execute('SELECT title, summary, embedding FROM bill')
-    return cur.fetchall()
+def load_bills() -> List[Bill]:
+    con = sqlite3.connect(DB_FILE)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute('SELECT * from bill')
+    while row := cur.fetchone():
+        yield Bill.from_dict(dict(row))
 
 
-def save_bill_embedding(title, embedding: List[float]):
-    con, cur = db.connect()
-    cur.execute('UPDATE bill SET embedding = ? where title = ?',
-                (emb_encode(embedding), title)
-                )
+def has_embedding(id):
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT count(*) from bill_summary_embedding where bill_id = ?', (id,))
+    return cur.fetchone()[0] > 0
+
+
+def set_bill_summary_embedding(id, embedding: List[float]):
+    con, cur = db.connect(DB_FILE)
+    emb_bytes = emb_encode(embedding)
+    params = {'bill_id': id, 'embedding': emb_bytes}
+    cur.execute(
+        'insert into bill_summary_embedding (bill_id, embedding) '
+        'values (:bill_id, :embedding) '
+        'on conflict (bill_id) do update set embedding = :embedding',
+        params)
     con.commit()
+
+
+# def load_similar_bills()
+#     embedder = Embedder()
+#     prompt_emb = embedder.embed(prompt)
+#     bills = store.load_similar_bills(prompt_emb)
+#     results = []
+#     for bill bills:
+#         if not embedding: continue
+#         emb2 = store.emb_decode(embedding)
+#         results.append((title, summary, embedder.similarity(prompt_emb, emb2)))
+#     results.sort(key=lambda x: x[2], reverse=True)
+#     return results[:5]
 
 
 def emb_encode(values):
