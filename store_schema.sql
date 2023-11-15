@@ -16,9 +16,3 @@ create table if not exists bill_summary_embedding (
     embedding blob
     -- no FK so we can keep expensive embeddings while deleting bills
 );
-
-create table if not exists bill_summary_short (
-    bill_id text unique,
-    summary text
-    -- no FK so we can keep expensive embeddings while deleting bills
-);

@@ -23,8 +23,13 @@ class Bill:
 
 def wipe():
     db.drop(DB_FILE)
+    update_schema()
+
+
+def update_schema():
     con, cur = db.connect(DB_FILE)
-    cur.execute('CREATE TABLE IF NOT EXISTS bill(id text, data json, error text)')
+    with open('staging_schema.sql') as f:
+        cur.executescript(f.read())
     con.commit()
 
 
@@ -62,3 +67,20 @@ def load_bills():
     for row in rows:
         data = json.loads(row[1])
         yield Bill(row[0], data, row[2])
+
+
+def has_short_summary(id):
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT count(*) from bill_summary_summary where bill_id = ?', (id,))
+    return cur.fetchone()[0] > 0
+
+
+def set_bill_short_summary(id, summary, error=None):
+    con, cur = db.connect(DB_FILE)
+    params = {'bill_id': id, 'summary': summary, 'error': error}
+    cur.execute(
+        'insert into bill_summary_summary (bill_id, summary, error) '
+        'values (:bill_id, :summary, :error) '
+        'on conflict (bill_id) do update set summary = :summary, error = :error',
+        params)
+    con.commit()

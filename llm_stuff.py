@@ -75,6 +75,6 @@ def summarise(text):
         messages=[
             {"role": "user", "content": prompt}
         ],
-        timeout=120
+        timeout=120,
     )
     return completion.choices[0].message.content

@@ -1,5 +1,8 @@
 from collections import defaultdict
+import queue
+import random
 import textwrap
+import threading
 import time
 import traceback
 
@@ -13,6 +16,7 @@ import llm_stuff
 def main():
     # grab source data
     # staging2.wipe()
+    # staging2.update_schema()
     # load_staging2()
 
     # load the 'data warehouse'
@@ -20,7 +24,9 @@ def main():
     # store.update_schema()
     # load_bills()
     # generate_summary_embeddings(fake_emb=False, overwrite=False)
-    generate_short_summaries()
+
+    # generate_short_summaries(fake=True, overwrite=True, limit=0, num_workers=20)
+    generate_short_summaries(fake=False, overwrite=True, limit=0, num_workers=5)
 
     # analyse stuff!
     # print_similar_bills('restrict individual rights')
@@ -114,27 +120,87 @@ def cluster_bills(num_clusters):
             print(f'  {bill_id}: {bill.title}')
 
 
-def generate_short_summaries(overwrite=True, debug=True):
-    """ Generate short summaries from existing summaries. Very slow! """
-    # todo: do in batches of bills, and make parallel summarise calls
-    # todo: store error messages and stack traces
-    for bill in list(store.load_bills())[:5]:
-        if len(bill.summary.split()) < 50: continue  # up to 50 words is fine
-        if store.has_short_summary(bill.id) and not overwrite:
-            print(f'skipping {bill.id}')
-            continue
+def generate_short_summaries(
+        fake=True,
+        overwrite=True,
+        limit=20,
+        num_workers=5):
+    """ Generate short summaries from existing summaries. Very slow!
 
-        if debug:
-            print(f'generating short summary for {bill.id}, with current summary:')
-            pretty_print(bill.summary, indent=2)
-        short_summary = llm_stuff.summarise(bill.summary)
-        store.set_bill_short_summary(bill.id, short_summary)
-        print(f'summarised {bill.id}')
+        Parameters:
+            fake (bool): use a fake summariser (for testing)
+            overwrite (bool): overwrite existing short summaries
+            limit (int): limit the number of bills to summarise
+            num_workers (int): number of workers to use
+    """
+    def summarise_fake(text):
+        time.sleep(1 + random.random() * 5)
+        if random.random() < .1:
+            raise Exception('fake error')
+        return "Fake text!"
+
+    bill_queue = queue.Queue()
+
+    # todo: load bills in batches
+    bills = list(store.load_bills())
+    if limit: bills = bills[:limit]
+    for bill in bills:
+        if not bill.summary or len(bill.summary.split()) < 50:
+            print(f'skipping already short: {bill.id}')
+            continue
+        if staging2.has_short_summary(bill.id) and not overwrite:
+            print(f'skipping existing: {bill.id}')
+            continue
+        bill_queue.put(bill)
+
+    print(f'summarising {bill_queue.qsize()} bills with {num_workers} workers...')
+    terminate_requested = False
+
+    def worker():
+        nonlocal terminate_requested
+        while True:
+            try:
+                if terminate_requested: break
+                bill = bill_queue.get_nowait()
+                summary = ''
+                print(f'generating short summary for {bill.id}')
+                if fake:
+                    summary = summarise_fake(bill.summary)
+                else:
+                    summary = llm_stuff.summarise(bill.summary)
+                staging2.set_bill_short_summary(bill.id, summary)
+                print(f'summarised {bill.id}')
+                bill_queue.task_done()
+            except queue.Empty:
+                break
+            except Exception as e:
+                print(f"Error processing bill {bill.id}: {e}")
+                stack_trace = traceback.format_exc()
+                staging2.set_bill_short_summary(bill.id, summary, error=f'{e}\n{stack_trace}')
+                bill_queue.task_done()
+
+    threads = []
+    for _ in range(num_workers):
+        t = threading.Thread(target=worker)
+        threads.append(t)
+        t.start()
+
+    try:
+        while True:
+            for t in threads:
+                t.join(timeout=0.3)
+            if not any(t.is_alive() for t in threads):
+                break
+    except KeyboardInterrupt:
+        print("Interrupted by user. Waiting for threads to finish current jobs...")
+        # let's gracefully exit
+        terminate_requested = True
 
 
 def pretty_print(text: str, indent=0, max_width=100):
     prefix = ' ' * indent
     print('\n'.join(prefix + line for line in textwrap.wrap(text, max_width)))
+
 
 if __name__ == '__main__':
     main()

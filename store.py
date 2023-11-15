@@ -121,20 +121,3 @@ def load_similar_bills(prompt, num_bills=5) -> Iterable[tuple[Bill, float]]:
     for bill in bill_scores[:num_bills]:
         id, score = bill
         yield load_bill(id), score
-
-
-def has_short_summary(id):
-    con, cur = db.connect(DB_FILE)
-    cur.execute('SELECT count(*) from bill_summary_short where bill_id = ?', (id,))
-    return cur.fetchone()[0] > 0
-
-
-def set_bill_short_summary(id, summary):
-    con, cur = db.connect(DB_FILE)
-    params = {'bill_id': id, 'summary': summary}
-    cur.execute(
-        'insert into bill_summary_short (bill_id, summary) '
-        'values (:bill_id, :summary) '
-        'on conflict (bill_id) do update set summary = :summary',
-        params)
-    con.commit()

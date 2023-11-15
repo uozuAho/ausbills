@@ -17,7 +17,7 @@ python fed.py
 - I'd also like to know about executive and state level, but starting small
 
 # todo
-- summarise long summaries
+- compare short summaries against originals + titles
 - load bill memorandums, embed, summarise
     - does this give better summaries than bill summaries/shortened summaries?
 - clustering: try again once you've embedded bill memorandums
