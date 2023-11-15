@@ -16,15 +16,14 @@ python fed.py
 - I'd also like to know about executive and state level, but starting small
 
 # todo
-- WIP: ask for some bills
-- cluster
-    - by area? kmeans? how many areas are there?
+- summarise long summaries
+- load bill memorandums, embed, summarise
+    - does this give better summaries than bill summaries/shortened summaries?
+- clustering: try again once you've embedded bill memorandums
 - load bills from previous parliaments
 - show number of bills passed over time
-- do libs/labor cause different bills to be passed/rejected?
-- load bill memorandums, embed, any better?
-    - ask more specific questions
-    - try RAG?
+    - who gets more done while in parliament?
+    - do libs/labor cause different bills to be passed/rejected?
 - data quality
     - loading 11 bad records in current parliament bills list. why?
 
@@ -39,3 +38,5 @@ python fed.py
 - 1 bill doesn't have a summary on the website
 - ignore bills with bad links, there's only 2, these possibly don't have links
   on the bill list page
+- clustering: results not very good when just using summary embeddings. Takes
+  work to understand clusters, bills seem to end up in wrong clusters

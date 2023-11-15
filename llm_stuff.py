@@ -1,7 +1,10 @@
 import struct
 import time
 from typing import List
+
 import llm
+import sklearn.cluster
+import numpy as np
 
 
 class Embedding:
@@ -43,6 +46,12 @@ class Embedder:
 
     def similarity(self, emb1: Embedding, emb2: Embedding):
         return llm.cosine_similarity(emb1.as_floats(), emb2.as_floats())
+
+    def cluster(self, embeddings: List[Embedding], num_clusters) -> List[int]:
+        model = sklearn.cluster.MiniBatchKMeans(n_clusters=num_clusters, n_init='auto')
+        to_cluster = np.array([emb.as_floats() for emb in embeddings])
+        model.fit(to_cluster)
+        return model.labels_
 
     def _retry(self, func, *args, **kwargs):
         for i in range(3):

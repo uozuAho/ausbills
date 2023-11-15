@@ -1,9 +1,8 @@
 import sqlite3
-import struct
 import db
 from dataclasses import dataclass
 
-from typing import List
+from typing import Iterable, List
 
 import staging2
 import llm_stuff
@@ -91,7 +90,18 @@ def set_bill_summary_embedding(id, embedding: llm_stuff.Embedding):
     con.commit()
 
 
-def load_similar_bills(prompt):
+def load_bill_summary_embeddings() -> Iterable[tuple[str, llm_stuff.Embedding]]:
+    con, cur = db.connect(DB_FILE)
+    cur.execute('SELECT bill_id, embedding from bill_summary_embedding')
+    while row := cur.fetchone():
+        bill_id, embedding = row
+        if not embedding: continue
+        embedding = llm_stuff.Embedding.from_bytes(embedding)
+        yield bill_id, embedding
+
+
+def load_similar_bills(prompt, num_bills=5) -> Iterable[tuple[Bill, float]]:
+    """ Returns (bill id, score) """
     embedder = llm_stuff.Embedder()
     prompt_emb = embedder.embed(prompt)
     con, cur = db.connect(DB_FILE)
@@ -104,5 +114,6 @@ def load_similar_bills(prompt):
         score = embedder.similarity(prompt_emb, embedding)
         bill_scores.append((bill_id, score))
     bill_scores.sort(key=lambda x: x[1], reverse=True)
-    for bill in bill_scores[:5]:
-        yield load_bill(bill[0])
+    for bill in bill_scores[:num_bills]:
+        id, score = bill
+        yield load_bill(id), score

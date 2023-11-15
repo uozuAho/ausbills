@@ -1,3 +1,5 @@
+from collections import defaultdict
+import textwrap
 import time
 import traceback
 
@@ -9,13 +11,19 @@ import llm_stuff
 
 
 def main():
+    # grab source data
     # staging2.wipe()
     # load_staging2()
 
+    # load the 'data warehouse'
     # store.wipe()
     # load_bills()
     # generate_summary_embeddings(fake_emb=False, overwrite=False)
-    print_similar_bills('war')
+
+    # analyse stuff!
+    # print_similar_bills('restrict individual rights')
+    print_similar_bills('socialist, social security, welfare')
+    # cluster_bills(20)
 
 
 def load_staging2(raise_on_error=False, reload_errors=False, limit=0):
@@ -82,9 +90,26 @@ def generate_summary_embeddings(fake_emb=True, overwrite=False):
 
 
 def print_similar_bills(prompt):
-    bills = store.load_similar_bills(prompt)
-    for bill in bills:
-        print(f'{bill.id}: {bill.title}')
+    print(f'bills similar to "{prompt}":')
+    for bill, score in store.load_similar_bills(prompt):
+        print()
+        print(f'{bill.id}: ({score:0.2f}): {bill.title}')
+        print('\n'.join('  ' + line for line in textwrap.wrap(bill.summary, 100)))
+
+
+def cluster_bills(num_clusters):
+    embedder = llm_stuff.Embedder()
+    bills = list(store.load_bill_summary_embeddings())
+    embeddings = [b[1] for b in bills]
+    labels = embedder.cluster(embeddings, num_clusters)
+    clustered = defaultdict(list)  # label -> bill ids
+    for label, bill in zip(labels, bills):
+        clustered[label].append(bill[0])
+    for key in clustered:
+        print(f'cluster {key}:')
+        for bill_id in clustered[key]:
+            bill = store.load_bill(bill_id)
+            print(f'  {bill_id}: {bill.title}')
 
 
 if __name__ == '__main__':
