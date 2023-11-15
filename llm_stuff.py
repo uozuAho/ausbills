@@ -5,6 +5,7 @@ from typing import List
 import llm
 import sklearn.cluster
 import numpy as np
+from openai import OpenAI
 
 
 class Embedding:
@@ -61,3 +62,19 @@ class Embedder:
                 print(f'failed to {func.__name__}: {e}')
                 time.sleep(2**i)
         raise Exception('failed to execute function')
+
+
+def summarise(text):
+    client = OpenAI()
+    prompt = """I will give you a paragraph of text. Summarise the text into
+    the following format: One short sentence that gives the gist of the paragraph,
+    then a list of at most 5 bullet points that highlight the key
+    information in the paragraph. Here is the paragraph: \n\n""" + text
+    completion = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        timeout=120
+    )
+    return completion.choices[0].message.content

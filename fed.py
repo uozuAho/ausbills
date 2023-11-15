@@ -17,12 +17,14 @@ def main():
 
     # load the 'data warehouse'
     # store.wipe()
+    # store.update_schema()
     # load_bills()
     # generate_summary_embeddings(fake_emb=False, overwrite=False)
+    generate_short_summaries()
 
     # analyse stuff!
     # print_similar_bills('restrict individual rights')
-    print_similar_bills('socialist, social security, welfare')
+    # print_similar_bills('socialist, social security, welfare')
     # cluster_bills(20)
 
 
@@ -94,7 +96,7 @@ def print_similar_bills(prompt):
     for bill, score in store.load_similar_bills(prompt):
         print()
         print(f'{bill.id}: ({score:0.2f}): {bill.title}')
-        print('\n'.join('  ' + line for line in textwrap.wrap(bill.summary, 100)))
+        pretty_print(bill.summary, indent=2)
 
 
 def cluster_bills(num_clusters):
@@ -111,6 +113,28 @@ def cluster_bills(num_clusters):
             bill = store.load_bill(bill_id)
             print(f'  {bill_id}: {bill.title}')
 
+
+def generate_short_summaries(overwrite=True, debug=True):
+    """ Generate short summaries from existing summaries. Very slow! """
+    # todo: do in batches of bills, and make parallel summarise calls
+    # todo: store error messages and stack traces
+    for bill in list(store.load_bills())[:5]:
+        if len(bill.summary.split()) < 50: continue  # up to 50 words is fine
+        if store.has_short_summary(bill.id) and not overwrite:
+            print(f'skipping {bill.id}')
+            continue
+
+        if debug:
+            print(f'generating short summary for {bill.id}, with current summary:')
+            pretty_print(bill.summary, indent=2)
+        short_summary = llm_stuff.summarise(bill.summary)
+        store.set_bill_short_summary(bill.id, short_summary)
+        print(f'summarised {bill.id}')
+
+
+def pretty_print(text: str, indent=0, max_width=100):
+    prefix = ' ' * indent
+    print('\n'.join(prefix + line for line in textwrap.wrap(text, max_width)))
 
 if __name__ == '__main__':
     main()

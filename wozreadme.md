@@ -7,6 +7,7 @@ Using Python 3.11 (llm install fails on 3.12)
 . .venv/Scripts/activate
 pip install -r requirements
 llm keys set openai <enter your openai api key>
+export OPENAI_API_KEY=<your openai api key>
 # modify then run:
 python fed.py
 ```
